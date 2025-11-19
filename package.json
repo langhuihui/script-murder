@@ -1,0 +1,23 @@
+{
+  "name": "jubensha-sdk",
+  "version": "0.1.0",
+  "description": "Multiplayer Online Script Murder Game SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js && tsc --emitDeclarationOnly",
+    "dev": "tsc -w",
+    "server": "node server/index.js",
+    "demo": "node demo.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.27.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1",
+    "ws": "^8.18.3"
+  }
+}
