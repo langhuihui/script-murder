@@ -11,6 +11,12 @@ importers:
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
+      isomorphic-ws:
+        specifier: ^5.0.0
+        version: 5.0.0(ws@8.18.3)
+      jubensha-sdk:
+        specifier: link:/Users/dexter/project/script-murder
+        version: 'link:'
       ws:
         specifier: ^8.18.3
         version: 8.18.3
@@ -210,6 +216,11 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  isomorphic-ws@5.0.0:
+    resolution: {integrity: sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==}
+    peerDependencies:
+      ws: '*'
+
   playwright-core@1.56.1:
     resolution: {integrity: sha512-hutraynyn31F+Bifme+Ps9Vq59hKuUCz7H1kDOcBs+2oGguKkWTU50bBWrtz34OUWmIwpBTWDxaRPXrIXkgvmQ==}
     engines: {node: '>=18'}
@@ -365,6 +376,10 @@ snapshots:
 
   fsevents@2.3.2:
     optional: true
+
+  isomorphic-ws@5.0.0(ws@8.18.3):
+    dependencies:
+      ws: 8.18.3
 
   playwright-core@1.56.1: {}
 

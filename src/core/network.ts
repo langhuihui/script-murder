@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3';
-import WebSocket from 'ws'; // Use 'ws' in Node environment, or native WebSocket in browser
+import WebSocket from 'isomorphic-ws'; // Use 'ws' in Node environment, or native WebSocket in browser
 
 export class NetworkClient extends EventEmitter {
   private ws: WebSocket | null = null;
