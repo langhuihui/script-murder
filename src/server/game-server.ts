@@ -98,27 +98,38 @@ export class JubenshaServer {
       'room:create': this.handleCreateRoom.bind(this),
       'room:join': this.handleJoinRoom.bind(this),
       'room:leave': this.handlePlayerLeave.bind(this),
+      'room:setReady': this.handleSetReady.bind(this),
       'game:start': this.handleGameStart.bind(this),
       'game:phaseUpdate': this.handlePhaseUpdate.bind(this),
       'game:clueFound': this.handleClueFound.bind(this),
       'chat:message': this.handleChatMessage.bind(this)
     };
 
-    const handler = handlers[data.type];
+    // Support both 'type' and 'event' field for message type (client uses 'event')
+    const messageType = data.type || data.event;
+    const messageId = data.id; // For request-response pattern
+    const handler = handlers[messageType];
+
     if (handler) {
-      handler(ws, data.data || data); // Support both wrapped and unwrapped data
+      // Pass the message ID for response
+      const messageData = data.data || data;
+      messageData._requestId = messageId;
+      handler(ws, messageData);
     } else {
-      console.warn('Unknown message type:', data.type);
+      console.warn('Unknown message type:', messageType);
     }
   }
 
   private handleCreateRoom(ws: ExtendedWebSocket, data: any) {
     const roomId = this.generateRoomId();
+    const playerId = data.playerId || `player_${Date.now()}`;
+    const playerName = data.playerName || '房主';
+
     const room: Room = {
       id: roomId,
-      hostId: data.playerId,
+      hostId: playerId,
       scriptId: data.scriptId,
-      maxPlayers: data.maxPlayers,
+      maxPlayers: data.maxPlayers || 6,
       players: [],
       status: 'waiting',
       createdAt: Date.now()
@@ -127,52 +138,9 @@ export class JubenshaServer {
     this.rooms.set(roomId, room);
 
     const player: Player = {
-      id: data.playerId,
-      name: data.playerName,
-      isHost: true,
-      status: 'online',
-      joinedAt: Date.now()
-    };
-
-    room.players.push(player);
-    this.players.set(data.playerId, { ...player, roomId });
-
-    ws.roomId = roomId;
-    ws.playerId = data.playerId;
-
-    console.log(`Room created: ${roomId}, Host: ${data.playerName}`);
-
-    this.send(ws, {
-      type: 'room:created',
-      data: { roomId, room }
-    });
-
-    this.broadcastToRoom(roomId, {
-      type: 'room:playerJoined',
-      data: { player }
-    }, ws);
-  }
-
-  private handleJoinRoom(ws: ExtendedWebSocket, data: any) {
-    const { roomId, playerName, playerId } = data;
-    const room = this.rooms.get(roomId);
-
-    if (!room) {
-      return this.sendError(ws, 'Room not found');
-    }
-
-    if (room.players.length >= room.maxPlayers) {
-      return this.sendError(ws, 'Room is full');
-    }
-
-    if (room.status !== 'waiting') {
-      return this.sendError(ws, 'Game already started');
-    }
-
-    const player: Player = {
       id: playerId,
       name: playerName,
-      isHost: false,
+      isHost: true,
       status: 'online',
       joinedAt: Date.now()
     };
@@ -183,12 +151,75 @@ export class JubenshaServer {
     ws.roomId = roomId;
     ws.playerId = playerId;
 
+    console.log(`Room created: ${roomId}, Host: ${playerName}`);
+
+    // Send response with request ID for request-response pattern
+    const requestId = data._requestId;
+    if (requestId) {
+      this.send(ws, {
+        id: requestId,
+        data: { roomId, room, player }
+      });
+    } else {
+      this.send(ws, {
+        type: 'room:created',
+        data: { roomId, room, player }
+      });
+    }
+
+    this.broadcastToRoom(roomId, {
+      type: 'room:playerJoined',
+      data: { player }
+    }, ws);
+  }
+
+  private handleJoinRoom(ws: ExtendedWebSocket, data: any) {
+    const roomId = data.roomId;
+    const playerName = data.playerName || '玩家';
+    const newPlayerId = data.playerId || `player_${Date.now()}`;
+    const room = this.rooms.get(roomId);
+    const requestId = data._requestId;
+
+    if (!room) {
+      return this.sendError(ws, 'Room not found', requestId);
+    }
+
+    if (room.players.length >= room.maxPlayers) {
+      return this.sendError(ws, 'Room is full', requestId);
+    }
+
+    if (room.status !== 'waiting') {
+      return this.sendError(ws, 'Game already started', requestId);
+    }
+
+    const player: Player = {
+      id: newPlayerId,
+      name: playerName,
+      isHost: false,
+      status: 'online',
+      joinedAt: Date.now()
+    };
+
+    room.players.push(player);
+    this.players.set(newPlayerId, { ...player, roomId });
+
+    ws.roomId = roomId;
+    ws.playerId = newPlayerId;
+
     console.log(`Player joined: ${playerName} -> ${roomId}`);
 
-    this.send(ws, {
-      type: 'room:joined',
-      data: { room, player }
-    });
+    // Send response with request ID for request-response pattern
+    if (requestId) {
+      this.send(ws, {
+        id: requestId,
+        data: { room, player }
+      });
+    } else {
+      this.send(ws, {
+        type: 'room:joined',
+        data: { room, player }
+      });
+    }
 
     this.broadcastToRoom(roomId, {
       type: 'room:playerJoined',
@@ -242,6 +273,48 @@ export class JubenshaServer {
     });
   }
 
+  private handleSetReady(ws: ExtendedWebSocket, data: any) {
+    const { roomId, playerId } = ws;
+    const requestId = data._requestId;
+    const ready = data.ready;
+
+    if (!roomId || !playerId) {
+      return this.sendError(ws, 'Not in a room', requestId);
+    }
+
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      return this.sendError(ws, 'Room not found', requestId);
+    }
+
+    const player = room.players.find(p => p.id === playerId);
+    if (!player) {
+      return this.sendError(ws, 'Player not found', requestId);
+    }
+
+    // Update player ready status
+    (player as any).isReady = ready;
+
+    console.log(`Player ${player.name} is now ${ready ? 'ready' : 'not ready'} in room ${roomId}`);
+
+    // Send response to the player
+    this.send(ws, {
+      id: requestId,
+      data: { success: true, isReady: ready }
+    });
+
+    // Broadcast to all players in the room
+    this.broadcastToRoom(roomId, {
+      type: 'room:playerReady',
+      data: {
+        playerId: playerId,
+        playerName: player.name,
+        isReady: ready,
+        room: room
+      }
+    });
+  }
+
   private handleChatMessage(ws: ExtendedWebSocket, data: any) {
     const { roomId } = ws;
     if (!roomId) return;
@@ -252,6 +325,17 @@ export class JubenshaServer {
     const player = room.players.find(p => p.id === ws.playerId);
     if (!player) return;
 
+    const requestId = data._requestId;
+
+    // Send response to the sender first
+    if (requestId) {
+      this.send(ws, {
+        id: requestId,
+        data: { success: true }
+      });
+    }
+
+    // Broadcast to all players in the room (including sender)
     this.broadcastToRoom(roomId, {
       type: 'chat:message',
       data: {
@@ -320,14 +404,22 @@ export class JubenshaServer {
     }
   }
 
-  private sendError(ws: WebSocket, message: string) {
-    this.send(ws, {
-      type: 'error',
-      message
-    });
+  private sendError(ws: WebSocket, message: string, requestId?: string) {
+    if (requestId) {
+      this.send(ws, {
+        id: requestId,
+        error: message
+      });
+    } else {
+      this.send(ws, {
+        type: 'error',
+        message
+      });
+    }
   }
 
   private generateRoomId(): string {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    // 生成6位纯数字房间号
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }

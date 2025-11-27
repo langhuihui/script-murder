@@ -16,6 +16,7 @@ export declare class JubenshaServer {
     private handleGameStart;
     private handlePhaseUpdate;
     private handleClueFound;
+    private handleSetReady;
     private handleChatMessage;
     private handlePlayerLeave;
     private broadcastToRoom;

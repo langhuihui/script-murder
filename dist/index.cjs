@@ -3876,8 +3876,9 @@ var NetworkClient = class extends eventemitter3_default {
           this.pendingRequests.delete(message.id);
           return;
         }
-        if (message.event) {
-          this.emit(message.event, message.data);
+        const eventType = message.event || message.type;
+        if (eventType) {
+          this.emit(eventType, message.data);
         }
       };
       this.ws.onerror = (err) => {
@@ -3916,27 +3917,100 @@ var RoomManager = class extends eventemitter3_default {
   constructor(network) {
     super();
     this.currentRoom = null;
+    this.currentPlayer = null;
     this.network = network;
+    this.setupNetworkListeners();
   }
-  async createRoom(scriptId, maxPlayers) {
-    const res = await this.network.send("room:create", { scriptId, maxPlayers });
-    this.currentRoom = {
+  setupNetworkListeners() {
+    this.network.on("room:playerJoined", (data) => {
+      console.log("[RoomManager] Player joined:", data.player);
+      if (this.currentRoom && data.player) {
+        const exists = this.currentRoom.players.some((p) => p.id === data.player.id);
+        if (!exists) {
+          this.currentRoom.players.push(data.player);
+        }
+        this.emit("playerJoined", data.player);
+        this.emit("roomUpdated", this.currentRoom);
+      }
+    });
+    this.network.on("room:playerLeft", (data) => {
+      console.log("[RoomManager] Player left:", data.playerId);
+      if (this.currentRoom) {
+        this.currentRoom.players = this.currentRoom.players.filter((p) => p.id !== data.playerId);
+        this.emit("playerLeft", data.playerId);
+        this.emit("roomUpdated", this.currentRoom);
+      }
+    });
+    this.network.on("room:updated", (data) => {
+      console.log("[RoomManager] Room updated:", data.room);
+      if (data.room) {
+        this.currentRoom = data.room;
+        this.emit("roomUpdated", this.currentRoom);
+      }
+    });
+    this.network.on("room:playerReady", (data) => {
+      console.log("[RoomManager] Player ready status changed:", data);
+      if (this.currentRoom) {
+        const player = this.currentRoom.players.find((p) => p.id === data.playerId);
+        if (player) {
+          player.isReady = data.isReady;
+        }
+        if (data.room) {
+          this.currentRoom = data.room;
+        }
+        this.emit("playerReady", { playerId: data.playerId, isReady: data.isReady });
+        this.emit("roomUpdated", this.currentRoom);
+      }
+    });
+    this.network.on("chat:message", (data) => {
+      console.log("[RoomManager] Chat message received:", data);
+      this.emit("chatMessage", data);
+    });
+  }
+  async createRoom(scriptId, maxPlayers, playerName) {
+    const res = await this.network.send("room:create", { scriptId, maxPlayers, playerName });
+    const room = res.room || {
       id: res.roomId,
-      hostId: "LOCAL_USER",
-      // 简化处理
-      players: [],
+      hostId: res.player?.id || "LOCAL_USER",
+      players: res.room?.players || [res.player].filter(Boolean),
       maxPlayers,
       scriptId
     };
-    return res.roomId;
+    this.currentRoom = room;
+    this.currentPlayer = res.player || null;
+    this.emit("roomCreated", { room: this.currentRoom, player: this.currentPlayer });
+    return {
+      roomId: res.roomId,
+      room,
+      player: this.currentPlayer
+    };
   }
   async joinRoom(roomId, playerName) {
-    await this.network.send("room:join", { roomId, playerName });
-    console.log(`Joined room ${roomId} as ${playerName}`);
+    const res = await this.network.send("room:join", { roomId, playerName });
+    this.currentRoom = res.room || null;
+    this.currentPlayer = res.player || null;
+    console.log(`Joined room ${roomId} as ${playerName}`, res);
+    this.emit("roomJoined", { room: this.currentRoom, player: this.currentPlayer });
+    return {
+      room: this.currentRoom,
+      player: this.currentPlayer
+    };
   }
   leaveRoom() {
     this.currentRoom = null;
+    this.currentPlayer = null;
     this.emit("left");
+  }
+  async setReady(ready) {
+    const res = await this.network.send("room:setReady", { ready });
+    if (this.currentPlayer) {
+      this.currentPlayer.isReady = ready;
+    }
+    return res;
+  }
+  async sendMessage(message) {
+    const res = await this.network.send("chat:message", { message });
+    return res;
   }
 };
 

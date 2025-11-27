@@ -35,9 +35,10 @@ export class NetworkClient extends EventEmitter {
           return;
         }
 
-        // Handle Server Push Event
-        if (message.event) {
-          this.emit(message.event, message.data);
+        // Handle Server Push Event (support both 'event' and 'type' fields)
+        const eventType = message.event || message.type;
+        if (eventType) {
+          this.emit(eventType, message.data);
         }
       };
 
