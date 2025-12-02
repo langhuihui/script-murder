@@ -1,0 +1,189 @@
+/* 以斯帖记剧本主题样式 - 波斯帝国宫廷风格 */
+
+:root {
+  --esther-primary: #8B4513; /* 棕色 - 波斯宫殿的土色 */
+  --esther-secondary: #D4AF37; /* 金色 - 王室的奢华 */
+  --esther-background: linear-gradient(135deg, #2C1810 0%, #4A2C1A 50%, #6B4423 100%);
+  --esther-text: #F5E6D3; /* 米白色 - 羊皮纸色 */
+  --esther-accent: #C9A961; /* 淡金色 */
+  --esther-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* 应用到 body 的样式 */
+body.script-theme-esther-story {
+  background: var(--esther-background) !important;
+  color: var(--esther-text) !important;
+  font-family: 'Georgia', 'Times New Roman', serif !important;
+  position: relative;
+}
+
+body.script-theme-esther-story::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body.script-theme-esther-story > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 标题样式 */
+body.script-theme-esther-story h1 {
+  color: var(--esther-secondary) !important;
+  text-shadow: 
+    2px 2px 4px var(--esther-shadow),
+    0 0 10px rgba(212, 175, 55, 0.3) !important;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+/* 卡片样式 - 模拟羊皮纸 */
+body.script-theme-esther-story .script-card,
+body.script-theme-esther-story .room-section {
+  background: linear-gradient(to bottom, #F5E6D3 0%, #E8D5B7 100%) !important;
+  border: 2px solid var(--esther-primary) !important;
+  box-shadow: 
+    0 4px 8px var(--esther-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  color: #2C1810 !important;
+  position: relative;
+}
+
+body.script-theme-esther-story .script-card::before,
+body.script-theme-esther-story .room-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 69, 19, 0.03) 2px,
+      rgba(139, 69, 19, 0.03) 4px
+    );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* 按钮样式 - 金色按钮 */
+body.script-theme-esther-story .btn-primary {
+  background: linear-gradient(to bottom, var(--esther-secondary) 0%, #B8941F 100%) !important;
+  color: #2C1810 !important;
+  border: 1px solid #8B6914 !important;
+  box-shadow: 
+    0 2px 4px var(--esther-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+body.script-theme-esther-story .btn-primary:hover {
+  background: linear-gradient(to bottom, #E5C547 0%, var(--esther-secondary) 100%) !important;
+  box-shadow: 
+    0 4px 8px var(--esther-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+body.script-theme-esther-story .btn-secondary {
+  background: linear-gradient(to bottom, #6B4423 0%, #4A2C1A 100%) !important;
+  color: var(--esther-text) !important;
+  border: 1px solid #8B4513 !important;
+}
+
+body.script-theme-esther-story .btn-secondary:hover {
+  background: linear-gradient(to bottom, #8B5A3C 0%, #6B4423 100%) !important;
+}
+
+/* 玩家列表项 */
+body.script-theme-esther-story .player-item {
+  background: rgba(245, 230, 211, 0.8) !important;
+  border: 1px solid var(--esther-primary) !important;
+  color: #2C1810 !important;
+}
+
+body.script-theme-esther-story .host-badge {
+  background: var(--esther-secondary) !important;
+  color: #2C1810 !important;
+  font-weight: bold;
+  box-shadow: 0 2px 4px var(--esther-shadow);
+}
+
+/* 难度标签 */
+body.script-theme-esther-story .difficulty.medium {
+  background: linear-gradient(to bottom, #D4AF37 0%, #B8941F 100%) !important;
+  color: #2C1810 !important;
+  border: 1px solid #8B6914 !important;
+}
+
+/* 输入框样式 */
+body.script-theme-esther-story input[type="text"] {
+  background: rgba(245, 230, 211, 0.9) !important;
+  border: 2px solid var(--esther-primary) !important;
+  color: #2C1810 !important;
+  font-family: 'Georgia', serif;
+}
+
+body.script-theme-esther-story input[type="text"]:focus {
+  outline: 2px solid var(--esther-secondary);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+/* 房间信息区域 */
+body.script-theme-esther-story .room-info {
+  background: rgba(245, 230, 211, 0.6) !important;
+  border: 1px solid var(--esther-primary) !important;
+  color: #2C1810 !important;
+}
+
+/* 错误提示 */
+body.script-theme-esther-story .error {
+  background: rgba(139, 69, 19, 0.9) !important;
+  border: 2px solid var(--esther-secondary) !important;
+  color: var(--esther-text) !important;
+  box-shadow: 0 4px 8px var(--esther-shadow);
+}
+
+/* 加载动画 */
+body.script-theme-esther-story .loading {
+  color: var(--esther-secondary) !important;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* 添加装饰性元素 */
+body.script-theme-esther-story .container::before {
+  content: '👑';
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  font-size: 3em;
+  opacity: 0.1;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body.script-theme-esther-story .container::after {
+  content: '⚔️';
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  font-size: 3em;
+  opacity: 0.1;
+  z-index: 0;
+  pointer-events: none;
+}
+

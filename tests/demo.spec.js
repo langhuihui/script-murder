@@ -2,7 +2,10 @@ const { test, expect } = require('@playwright/test');
 const { spawn } = require('child_process');
 const path = require('path');
 
-function waitForOutput(proc, text, timeoutMs) {
+/**
+ * 等待进程输出指定文本
+ */
+function waitForOutput(proc, text, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
     let buffer = '';
 
@@ -21,12 +24,12 @@ function waitForOutput(proc, text, timeoutMs) {
 
     const cleanup = () => {
       clearTimeout(timer);
-      proc.stdout.off('data', onData);
-      proc.stderr.off('data', onData);
+      if (proc.stdout) proc.stdout.off('data', onData);
+      if (proc.stderr) proc.stderr.off('data', onData);
     };
 
-    proc.stdout.on('data', onData);
-    proc.stderr.on('data', onData);
+    if (proc.stdout) proc.stdout.on('data', onData);
+    if (proc.stderr) proc.stderr.on('data', onData);
   });
 }
 
@@ -34,7 +37,7 @@ test('jubensha demo full flow via demo.js', async () => {
   const cwd = path.resolve(__dirname, '..');
 
   // 1. 启动 WebSocket Server
-  const server = spawn('node', ['server/index.js'], {
+  const server = spawn('tsx', ['server/index.ts'], {
     cwd,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -42,7 +45,7 @@ test('jubensha demo full flow via demo.js', async () => {
   // 等待服务启动完成
   await waitForOutput(
     server,
-    'WebSocket Server started on ws://localhost:8080',
+    'Server started on port',
     10000
   );
 
@@ -65,9 +68,18 @@ test('jubensha demo full flow via demo.js', async () => {
     process.stderr.write(text);
   });
 
-  const exitCode = await new Promise((resolve) => {
-    demo.on('close', (code) => resolve(code));
-  });
+  // 添加超时处理
+  const exitCode = await Promise.race([
+    new Promise((resolve) => {
+      demo.on('close', (code) => resolve(code));
+    }),
+    new Promise((resolve) => {
+      setTimeout(() => {
+        demo.kill('SIGTERM');
+        resolve(-1);
+      }, 45000); // 45秒超时
+    })
+  ]);
 
   // 3. 关闭 server
   server.kill('SIGTERM');

@@ -18,6 +18,8 @@ export interface Player {
   isHost: boolean;       // 是否是房主
   characterId?: string;  // 扮演的角色ID
   status: 'online' | 'offline';
+  isReady?: boolean;     // 是否已准备
+  joinedAt?: number;     // 加入时间（服务器端使用）
 }
 
 // 房间信息接口

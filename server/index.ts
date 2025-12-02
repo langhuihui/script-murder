@@ -1,88 +1,147 @@
-import { WebSocketServer, WebSocket } from 'ws';
+import { JubenshaServer } from '../src/server';
 import { createServer } from 'http';
+import { readFileSync, existsSync } from 'fs';
+import { join, extname, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { getPortConfig } from '../src/utils/port-config';
 
-const server = createServer();
-const wss = new WebSocketServer({ server });
+// 获取当前文件目录
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const PORT = 8080;
+// 从环境变量读取端口配置（现在共用同一个端口）
+const PORT = parseInt(process.env.PORT || process.env.WS_PORT || process.env.HTTP_PORT || '4000', 10);
 
-interface Room {
-  id: string;
-  players: WebSocket[];
-  state: any;
-}
+// Content-Type 映射
+const CONTENT_TYPES: Record<string, string> = {
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.html': 'text/html'
+};
 
-const rooms: Record<string, Room> = {};
+const SCRIPTS_DIR = join(__dirname, '..', 'scripts');
+const ROOT_DIR = join(__dirname, '..');
+const INDEX_FILE = join(ROOT_DIR, 'test-script-list.html');
 
-wss.on('connection', (ws) => {
-  console.log('Client connected');
+// 创建 HTTP 服务器用于提供静态文件（CSS、图片等）
+const httpServer = createServer((req, res) => {
+  if (!req.url) {
+    res.writeHead(400);
+    res.end('Bad Request');
+    return;
+  }
 
-  ws.on('message', (message) => {
-    try {
-      const raw = message.toString();
-      const { id, event, data } = JSON.parse(raw);
-      
-      console.log(`Received [${event}]:`, data);
-
-      let responseData = {};
-
-      switch (event) {
-        case 'room:create':
-          const roomId = 'ROOM_' + Math.floor(Math.random() * 10000);
-          rooms[roomId] = { id: roomId, players: [ws], state: {} };
-          responseData = { roomId };
-          break;
-
-        case 'room:join':
-          if (rooms[data.roomId]) {
-            rooms[data.roomId].players.push(ws);
-            responseData = { success: true };
-            // Broadcast to others
-            broadcast(rooms[data.roomId], 'playerJoined', { name: data.playerName }, ws);
-          } else {
-            throw new Error('Room not found');
-          }
-          break;
-
-        case 'game:start':
-        case 'game:phaseUpdate':
-        case 'game:clueFound':
-          // Simple echo/broadcast for game events
-          // In a real app, you'd validate and update server state here
-          responseData = { success: true };
-          // Broadcast to all in room (assuming we track room per socket, skipping for simplicity here)
-          // For demo, we just respond success. 
-          // To properly broadcast, we need to know which room this socket belongs to.
-          break;
-          
-        default:
-          console.warn('Unknown event:', event);
+  // 处理首页请求
+  if (req.url === '/' || req.url === '/index.html') {
+    if (existsSync(INDEX_FILE)) {
+      try {
+        const content = readFileSync(INDEX_FILE);
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(content);
+        return;
+      } catch (error) {
+        console.error('Error serving index file:', error);
+        res.writeHead(500);
+        res.end('Internal Server Error');
+        return;
       }
-
-      // Send response back matching the request ID
-      ws.send(JSON.stringify({
-        id,
-        data: responseData
-      }));
-
-    } catch (error: any) {
-      console.error('Error processing message:', error);
+    } else {
+      res.writeHead(404);
+      res.end('Index file not found');
+      return;
     }
-  });
+  }
 
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
+  // 处理静态文件请求（scripts 目录下的文件）
+  if (req.url.startsWith('/scripts/')) {
+    const filePath = join(__dirname, '..', req.url);
+    
+    // 安全检查：确保文件在 scripts 目录内
+    if (!filePath.startsWith(SCRIPTS_DIR)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
+    }
+
+    if (!existsSync(filePath)) {
+      res.writeHead(404);
+      res.end('Not Found');
+      return;
+    }
+
+    try {
+      const content = readFileSync(filePath);
+      const ext = extname(filePath);
+      const contentType = CONTENT_TYPES[ext] || 'application/octet-stream';
+      
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+    } catch (error) {
+      console.error('Error serving file:', error);
+      res.writeHead(500);
+      res.end('Internal Server Error');
+    }
+    return;
+  }
+
+  // 处理根目录静态文件（CSS、JS 等）
+  const rootStaticFiles = ['/styles.css', '/app.js'];
+  if (rootStaticFiles.includes(req.url)) {
+    const filePath = join(ROOT_DIR, req.url);
+    
+    // 安全检查：确保文件在项目根目录内
+    if (!filePath.startsWith(ROOT_DIR)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
+    }
+
+    if (!existsSync(filePath)) {
+      res.writeHead(404);
+      res.end('Not Found');
+      return;
+    }
+
+    try {
+      const content = readFileSync(filePath);
+      const ext = extname(filePath);
+      const contentType = CONTENT_TYPES[ext] || 'application/octet-stream';
+      
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+      return;
+    } catch (error) {
+      console.error('Error serving static file:', error);
+      res.writeHead(500);
+      res.end('Internal Server Error');
+      return;
+    }
+  }
+
+  // 其他请求返回 404
+  res.writeHead(404);
+  res.end('Not Found');
 });
 
-function broadcast(room: Room, event: string, data: any, exclude?: WebSocket) {
-  room.players.forEach(client => {
-    if (client !== exclude && client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ event, data }));
-    }
-  });
-}
+// 启动 WebSocket 服务器（挂载到 HTTP 服务器上）
+const wsServer = new JubenshaServer({
+  server: httpServer,
+  path: '/ws'
+});
 
-server.listen(PORT, () => {
-  console.log(`WebSocket Server started on ws://localhost:${PORT}`);
+// 启动 HTTP 服务器（WebSocket 也挂载在这个服务器上）
+httpServer.listen(PORT, () => {
+  console.log(`\n✅ Server started on port ${PORT}`);
+  console.log(`\n🌐 HTTP Server:`);
+  console.log(`   Homepage: http://localhost:${PORT}/`);
+  console.log(`   Static files: http://localhost:${PORT}/scripts/`);
+  console.log(`\n📡 WebSocket Server:`);
+  console.log(`   URL: ws://localhost:${PORT}/ws`);
+  console.log(`\n⚙️  Port: ${PORT} (from env: PORT=${process.env.PORT || process.env.WS_PORT || process.env.HTTP_PORT || 'default'})`);
+  console.log('\n✅ Server is ready to accept connections');
 });

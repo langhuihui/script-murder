@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>剧本杀 - 剧本列表</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>🎭 剧本杀 - 剧本列表</h1>
+
+    <div id="error" class="error"></div>
+
+    <div id="loading" class="loading">加载剧本列表中...</div>
+
+    <div id="scriptList" class="script-list"></div>
+
+    <div id="roomSection" class="room-section">
+      <h2>房间信息</h2>
+      <div id="roomInfo" class="room-info"></div>
+      <div id="playerList" class="player-list"></div>
+
+      <!-- 游戏控制区域（仅房主可见） -->
+      <div id="gameControlSection" class="game-control-section">
+        <h3>游戏控制</h3>
+        <div id="gameStatus" class="game-status">
+          <p>游戏状态：<span id="gamePhase">等待开始</span></p>
+        </div>
+
+        <!-- 当前阶段信息（房主） -->
+        <div id="hostCurrentPhaseInfo" class="phase-info"></div>
+
+        <!-- 当前阶段剧本内容（房主） -->
+        <div id="hostCurrentPhaseContent" class="phase-content">
+          <h4>📖 当前阶段内容</h4>
+          <div id="hostPhaseDescription" class="phase-description"></div>
+        </div>
+
+        <!-- 主持人剧本内容（根据阶段显示） -->
+        <div id="hostScriptContent" class="host-script-content">
+          <h4>📖 主持人剧本（当前环节）</h4>
+          <div id="hostStoryline" class="host-storyline"></div>
+        </div>
+
+        <div class="actions">
+          <button id="startGameBtn" class="btn btn-primary" onclick="startGame()">开始游戏</button>
+          <button id="prevPhaseBtn" class="btn btn-secondary" onclick="prevPhase()">上一阶段</button>
+          <button id="nextPhaseBtn" class="btn btn-secondary" onclick="nextPhase()">下一阶段</button>
+        </div>
+      </div>
+
+      <!-- 玩家游戏区域 -->
+      <div id="playerGameSection" class="player-game-section">
+        <h3>游戏内容</h3>
+
+        <!-- 浮动按钮：切换显示房间信息 -->
+        <button id="toggleRoomInfoBtn" class="toggle-room-info-btn" onclick="toggleRoomInfo()"
+          title="显示/隐藏房间信息">ℹ️</button>
+
+        <!-- 角色信息（游戏开始后显示） -->
+        <div id="characterInfo" class="character-info">
+          <h4>🎭 你的角色</h4>
+          <div id="characterDetails" class="character-details"></div>
+        </div>
+
+        <!-- 当前阶段信息 -->
+        <div id="currentPhaseInfo" class="phase-info"></div>
+
+        <!-- 当前阶段剧本内容 -->
+        <div id="currentPhaseContent" class="phase-content">
+          <h4>📖 当前阶段内容</h4>
+          <div id="phaseDescription" class="phase-description"></div>
+        </div>
+
+        <!-- 等待状态：显示准备按钮 -->
+        <div id="waitingSection" class="waiting-section">
+          <p>等待房主开始游戏...</p>
+          <button id="readyBtn" class="btn btn-primary" onclick="toggleReady()">准备</button>
+        </div>
+        <!-- 游戏中：显示线索区域 -->
+        <div id="cluesSection" class="clues-section">
+          <h4>线索</h4>
+          <div id="cluesList" class="clues-list"></div>
+          <div class="input-group">
+            <input type="text" id="clueIdInput" placeholder="输入线索ID">
+            <button class="btn btn-primary" onclick="submitClue()">提交线索</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 玩家操作区域（根据角色动态显示） -->
+      <div id="playerActions" class="player-actions">
+        <div class="input-group">
+          <label for="playerName">玩家名称：</label>
+          <input type="text" id="playerName" placeholder="输入你的名字" value="玩家1">
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="joinRoom()">加入房间</button>
+        </div>
+      </div>
+
+      <!-- 房主操作区域（只显示离开房间按钮） -->
+      <div id="hostActions" class="host-actions">
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="leaveRoom()">离开房间</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模态对话框：输入玩家名称 -->
+    <div id="playerNameModal" class="modal">
+      <div class="modal-content">
+        <h3>请输入你的名字</h3>
+        <input type="text" id="modalPlayerName" placeholder="输入你的名字" value="房主">
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="closePlayerNameModal()">取消</button>
+          <button class="btn btn-primary" onclick="confirmPlayerName()">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>

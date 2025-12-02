@@ -25,20 +25,24 @@ export class NetworkClient extends EventEmitter {
       };
 
       this.ws.onmessage = (event) => {
-        const message = JSON.parse(event.data.toString());
-        
-        // Handle Response
-        if (message.id && this.pendingRequests.has(message.id)) {
-          const resolveReq = this.pendingRequests.get(message.id);
-          if (resolveReq) resolveReq(message.data);
-          this.pendingRequests.delete(message.id);
-          return;
-        }
+        try {
+          const message = JSON.parse(event.data.toString());
+          
+          // Handle Response
+          if (message.id && this.pendingRequests.has(message.id)) {
+            const resolveReq = this.pendingRequests.get(message.id);
+            if (resolveReq) resolveReq(message.data);
+            this.pendingRequests.delete(message.id);
+            return;
+          }
 
-        // Handle Server Push Event (support both 'event' and 'type' fields)
-        const eventType = message.event || message.type;
-        if (eventType) {
-          this.emit(eventType, message.data);
+          // Handle Server Push Event (support both 'event' and 'type' fields)
+          const eventType = message.event || message.type;
+          if (eventType) {
+            this.emit(eventType, message.data);
+          }
+        } catch (error) {
+          console.error('[Network] Failed to parse message:', error);
         }
       };
 
@@ -64,7 +68,7 @@ export class NetworkClient extends EventEmitter {
     this.emit('disconnect');
   }
 
-  public async send(event: string, data: any): Promise<any> {
+  public async send(event: string, data: any, timeout: number = 10000): Promise<any> {
     if (!this.connected || !this.ws) throw new Error('Network not connected');
     
     const requestId = Math.random().toString(36).substring(7);
@@ -73,9 +77,18 @@ export class NetworkClient extends EventEmitter {
     console.log(`[Network] Sending [${event}]:`, data);
     this.ws.send(payload);
 
-    return new Promise((resolve) => {
-      // Timeout fallback could be added here
-      this.pendingRequests.set(requestId, resolve);
-    });
+    return Promise.race([
+      new Promise<any>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          this.pendingRequests.delete(requestId);
+          reject(new Error(`Request timeout: ${event} (${timeout}ms)`));
+        }, timeout);
+        
+        this.pendingRequests.set(requestId, (data: any) => {
+          clearTimeout(timeoutId);
+          resolve(data);
+        });
+      })
+    ]);
   }
 }

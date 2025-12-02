@@ -22,14 +22,19 @@
     "build:cjs": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.cjs",
     "build:esm": "esbuild src/index.ts --bundle --platform=browser --format=esm --outfile=dist/index.mjs",
     "build:server": "esbuild src/server/index.ts --bundle --platform=node --format=cjs --outfile=dist/server/index.cjs && esbuild src/server/index.ts --bundle --platform=node --format=esm --outfile=dist/server/index.mjs --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\"",
-    "dev": "tsc -w",
-    "server": "node server/index.js",
-    "demo": "node demo.js"
+    "dev": "tsx start-dev.ts",
+    "dev:watch": "tsc -w",
+    "server": "npm run build && tsx server/index.ts",
+    "demo": "node demo.js",
+    "test:room": "tsx test-room-flow.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@types/ws": "^8.18.1",
     "esbuild": "^0.27.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {

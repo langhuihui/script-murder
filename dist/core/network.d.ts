@@ -7,5 +7,5 @@ export declare class NetworkClient extends EventEmitter {
     constructor(serverUrl: string);
     connect(): Promise<void>;
     disconnect(): void;
-    send(event: string, data: any): Promise<any>;
+    send(event: string, data: any, timeout?: number): Promise<any>;
 }

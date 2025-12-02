@@ -13,6 +13,8 @@ export interface Player {
     isHost: boolean;
     characterId?: string;
     status: 'online' | 'offline';
+    isReady?: boolean;
+    joinedAt?: number;
 }
 export interface Room {
     id: string;

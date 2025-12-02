@@ -65,7 +65,7 @@ export class RoomManager extends EventEmitter {
         // Update local room data
         const player = this.currentRoom.players.find(p => p.id === data.playerId);
         if (player) {
-          (player as any).isReady = data.isReady;
+          player.isReady = data.isReady;
         }
         // Also update with full room data from server
         if (data.room) {
@@ -86,41 +86,48 @@ export class RoomManager extends EventEmitter {
   public async createRoom(scriptId: string, maxPlayers: number, playerName?: string): Promise<CreateRoomResult> {
     const res = await this.network.send('room:create', { scriptId, maxPlayers, playerName });
 
-    // 使用服务器返回的完整数据
-    const room: Room = res.room || {
-      id: res.roomId,
-      hostId: res.player?.id || 'LOCAL_USER',
-      players: res.room?.players || [res.player].filter(Boolean),
-      maxPlayers,
-      scriptId
-    };
+    console.log('[RoomManager] createRoom response:', JSON.stringify(res, null, 2));
 
-    this.currentRoom = room;
+    // 网络层已经解析了 message.data，所以 res 就是服务器返回的 data 内容
+    // 使用服务器返回的完整数据
+    this.currentRoom = res.room || null;
     this.currentPlayer = res.player || null;
+
+    if (!this.currentRoom || !this.currentPlayer) {
+      throw new Error('Failed to create room: missing room or player data');
+    }
 
     this.emit('roomCreated', { room: this.currentRoom, player: this.currentPlayer });
 
+    const roomId = res.roomId || this.currentRoom.id;
+    console.log('[RoomManager] Extracted roomId:', roomId);
+
     return {
-      roomId: res.roomId,
-      room,
-      player: this.currentPlayer!
+      roomId: roomId,
+      room: this.currentRoom,
+      player: this.currentPlayer
     };
   }
 
   public async joinRoom(roomId: string, playerName: string): Promise<JoinRoomResult> {
     const res = await this.network.send('room:join', { roomId, playerName });
 
+    // 网络层已经解析了 message.data，所以 res 就是服务器返回的 data 内容
     // 使用服务器返回的完整数据
     this.currentRoom = res.room || null;
     this.currentPlayer = res.player || null;
+
+    if (!this.currentRoom || !this.currentPlayer) {
+      throw new Error('Failed to join room: missing room or player data');
+    }
 
     console.log(`Joined room ${roomId} as ${playerName}`, res);
 
     this.emit('roomJoined', { room: this.currentRoom, player: this.currentPlayer });
 
     return {
-      room: this.currentRoom!,
-      player: this.currentPlayer!
+      room: this.currentRoom,
+      player: this.currentPlayer
     };
   }
 
@@ -135,7 +142,7 @@ export class RoomManager extends EventEmitter {
 
     // Update local player ready status
     if (this.currentPlayer) {
-      (this.currentPlayer as any).isReady = ready;
+      this.currentPlayer.isReady = ready;
     }
 
     return res;

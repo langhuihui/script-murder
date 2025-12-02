@@ -1,0 +1,773 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: white;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.5em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.script-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.script-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.script-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+}
+
+.script-card h3 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 1.3em;
+}
+
+.script-card .description {
+  color: #666;
+  margin-bottom: 15px;
+  line-height: 1.5;
+  font-size: 0.9em;
+}
+
+.script-card .meta {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.script-card .meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.script-card .difficulty {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.difficulty.easy {
+  background: #d4edda;
+  color: #155724;
+}
+
+.difficulty.medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.difficulty.hard {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.script-card .actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #495057;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  color: #212529;
+  border-color: #adb5bd;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 游戏控制区域的按钮组 */
+.game-control-section .actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.game-control-section .btn {
+  min-width: 120px;
+  flex: 0 1 auto;
+}
+
+/* 离开房间按钮特殊样式 */
+#hostActions .btn,
+#playerActions .btn {
+  min-width: 140px;
+}
+
+.loading {
+  text-align: center;
+  color: white;
+  font-size: 1.2em;
+  padding: 40px;
+}
+
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.room-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 30px;
+  display: none;
+}
+
+.room-section.active {
+  display: block;
+}
+
+/* 房间页面样式 - 全屏显示 */
+body.in-room .container {
+  max-width: 100%;
+  padding: 20px;
+}
+
+body.in-room #scriptList {
+  display: none !important;
+}
+
+body.in-room .room-section {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.room-section h2 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.room-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.room-info p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.room-info strong {
+  color: #333;
+}
+
+.player-list {
+  margin: 15px 0;
+}
+
+.player-item {
+  padding: 10px;
+  background: #f8f9fa;
+  margin: 5px 0;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-item.current-player {
+  background: #e3f2fd;
+  border: 2px solid #2196f3;
+  font-weight: 500;
+}
+
+.player-item .host-badge {
+  background: #667eea;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  margin-left: 5px;
+}
+
+/* 游戏控制区域样式 */
+.game-control-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f4ff 100%);
+  border-radius: 12px;
+  border: 1px solid #b3d9ff;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+}
+
+.game-control-section h3 {
+  margin-top: 0;
+  color: #0066cc;
+}
+
+.game-status {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+}
+
+.game-status p {
+  margin: 0;
+  font-weight: bold;
+}
+
+.game-status #gamePhase {
+  color: #0066cc;
+}
+
+.player-game-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.character-info {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 8px;
+  border: 2px solid #667eea;
+}
+
+.character-card {
+  padding: 10px;
+}
+
+.character-card h5 {
+  margin: 0 0 10px 0;
+  color: #667eea;
+  font-size: 1.2em;
+}
+
+.character-card p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.host-script-content {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  border: 1px solid #667eea;
+}
+
+.host-storyline {
+  margin-top: 10px;
+}
+
+.storyline-content {
+  padding: 10px;
+}
+
+.storyline-content ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.storyline-content li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+/* 游戏视图状态 */
+body.game-view-active #scriptList,
+body.game-view-active #playerActions,
+body.game-view-active #hostActions,
+body.game-view-active #autoJoinContainer {
+  display: none;
+}
+
+/* 游戏页面显示房间信息和玩家列表（包含角色）- 仅房主可见 */
+body.game-view-active #roomInfo,
+body.game-view-active #playerList {
+  display: block;
+}
+
+/* 玩家沉浸式阅读模式：隐藏房间信息和玩家列表 */
+body.game-view-active.player-reading-mode #roomInfo,
+body.game-view-active.player-reading-mode #playerList {
+  display: none;
+}
+
+body.game-view-active #gameControlSection,
+body.game-view-active #playerGameSection {
+  display: block;
+}
+
+body.game-view-active .room-section {
+  max-width: 100%;
+}
+
+/* 玩家沉浸式阅读模式样式 */
+body.game-view-active.player-reading-mode {
+  background: linear-gradient(135deg, #2c1810 0%, #3d2817 50%, #2c1810 100%);
+}
+
+body.game-view-active.player-reading-mode .room-section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background: #f5f0e8;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  min-height: calc(100vh - 80px);
+}
+
+body.game-view-active.player-reading-mode .player-game-section {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+body.game-view-active.player-reading-mode .player-game-section h3 {
+  display: none;
+}
+
+body.game-view-active.player-reading-mode .character-info {
+  background: #fff;
+  border: 2px solid #8b6f47;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+body.game-view-active.player-reading-mode .character-info h4 {
+  font-size: 1.8em;
+  color: #8b6f47;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #8b6f47;
+  padding-bottom: 10px;
+}
+
+body.game-view-active.player-reading-mode .character-card {
+  font-size: 1.1em;
+  line-height: 1.8;
+}
+
+body.game-view-active.player-reading-mode .character-card h5 {
+  font-size: 1.5em;
+  color: #8b6f47;
+  margin-bottom: 15px;
+}
+
+body.game-view-active.player-reading-mode .phase-content {
+  background: #fff;
+  border: 2px solid #8b6f47;
+  border-radius: 12px;
+  padding: 30px;
+  margin-top: 30px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+body.game-view-active.player-reading-mode .phase-content h4 {
+  font-size: 1.8em;
+  color: #8b6f47;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #8b6f47;
+  padding-bottom: 10px;
+}
+
+body.game-view-active.player-reading-mode .phase-description {
+  font-size: 1.15em;
+  line-height: 1.9;
+  color: #3d2817;
+}
+
+body.game-view-active.player-reading-mode .phase-description h5 {
+  font-size: 1.4em;
+  color: #8b6f47;
+  margin-bottom: 15px;
+}
+
+body.game-view-active.player-reading-mode .phase-description p {
+  margin-bottom: 15px;
+}
+
+/* 浮动按钮：显示/隐藏房间信息 */
+.toggle-room-info-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: rgba(139, 111, 71, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 1.2em;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s;
+}
+
+.toggle-room-info-btn:hover {
+  background: rgba(139, 111, 71, 1);
+  transform: scale(1.1);
+}
+
+/* 当显示房间信息时，调整布局 */
+body.game-view-active.player-reading-mode.show-room-info .room-section {
+  max-width: 1200px;
+}
+
+body.game-view-active.player-reading-mode.show-room-info #roomInfo,
+body.game-view-active.player-reading-mode.show-room-info #playerList {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.character-info {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 8px;
+  border: 2px solid #667eea;
+}
+
+.character-card {
+  padding: 10px;
+}
+
+.character-card h5 {
+  margin: 0 0 10px 0;
+  color: #667eea;
+  font-size: 1.2em;
+}
+
+.character-card p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.host-script-content {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  border: 1px solid #667eea;
+}
+
+.host-storyline {
+  margin-top: 10px;
+}
+
+.storyline-content {
+  padding: 10px;
+}
+
+.storyline-content ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.storyline-content li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.player-character {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f0f4ff;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.player-character small {
+  color: #666;
+}
+
+.phase-info {
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.phase-content {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.phase-description h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.phase-actions {
+  margin-top: 10px;
+}
+
+.phase-actions ul {
+  margin: 5px 0;
+  padding-left: 20px;
+}
+
+.clues-section {
+  margin-top: 15px;
+}
+
+.clues-list {
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.clue-item {
+  padding: 8px;
+  margin-bottom: 5px;
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.clue-item.discovered {
+  background: #d4edda;
+  border-left: 3px solid #28a745;
+}
+
+.input-group {
+  margin: 15px 0;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 500;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1em;
+}
+
+/* 模态对话框样式 */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1em;
+  margin-bottom: 15px;
+}
+
+.modal-content .actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.info-message {
+  background: #d1ecf1;
+  color: #0c5460;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border-left: 4px solid #0c5460;
+}
+
+/* 初始隐藏的元素 */
+#error,
+#scriptList,
+#gameControlSection,
+#hostCurrentPhaseInfo,
+#hostCurrentPhaseContent,
+#hostScriptContent,
+#prevPhaseBtn,
+#nextPhaseBtn,
+#playerGameSection,
+#toggleRoomInfoBtn,
+#characterInfo,
+#currentPhaseInfo,
+#currentPhaseContent,
+#cluesSection,
+#playerActions,
+#hostActions {
+  display: none;
+}
+
+/* 模态对话框中的样式 */
+.modal-content p {
+  margin: 10px 0;
+  color: #666;
+}
+
+.modal-content input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1em;
+}
+
+.modal-content input[type="text"].room-id-input {
+  font-size: 1.2em;
+  text-align: center;
+  letter-spacing: 5px;
+}
+
+/* 玩家列表中的徽章样式 */
+.ready-badge {
+  color: #28a745;
+  margin-left: 8px;
+}
+
+.character-badge {
+  color: #667eea;
+  margin-left: 8px;
+}
+
+.current-player-indicator {
+  color: #007bff;
+  margin-left: 8px;
+}
+
+/* 角色信息中的秘密样式 */
+.character-secret {
+  color: #dc3545;
+}

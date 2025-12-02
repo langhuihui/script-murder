@@ -236,16 +236,20 @@ var NetworkClient = class extends eventemitter3_default {
         resolve();
       };
       this.ws.onmessage = (event) => {
-        const message = JSON.parse(event.data.toString());
-        if (message.id && this.pendingRequests.has(message.id)) {
-          const resolveReq = this.pendingRequests.get(message.id);
-          if (resolveReq) resolveReq(message.data);
-          this.pendingRequests.delete(message.id);
-          return;
-        }
-        const eventType = message.event || message.type;
-        if (eventType) {
-          this.emit(eventType, message.data);
+        try {
+          const message = JSON.parse(event.data.toString());
+          if (message.id && this.pendingRequests.has(message.id)) {
+            const resolveReq = this.pendingRequests.get(message.id);
+            if (resolveReq) resolveReq(message.data);
+            this.pendingRequests.delete(message.id);
+            return;
+          }
+          const eventType = message.event || message.type;
+          if (eventType) {
+            this.emit(eventType, message.data);
+          }
+        } catch (error) {
+          console.error("[Network] Failed to parse message:", error);
         }
       };
       this.ws.onerror = (err) => {
@@ -267,15 +271,24 @@ var NetworkClient = class extends eventemitter3_default {
     this.connected = false;
     this.emit("disconnect");
   }
-  async send(event, data) {
+  async send(event, data, timeout = 1e4) {
     if (!this.connected || !this.ws) throw new Error("Network not connected");
     const requestId = Math.random().toString(36).substring(7);
     const payload = JSON.stringify({ id: requestId, event, data });
     console.log(`[Network] Sending [${event}]:`, data);
     this.ws.send(payload);
-    return new Promise((resolve) => {
-      this.pendingRequests.set(requestId, resolve);
-    });
+    return Promise.race([
+      new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          this.pendingRequests.delete(requestId);
+          reject(new Error(`Request timeout: ${event} (${timeout}ms)`));
+        }, timeout);
+        this.pendingRequests.set(requestId, (data2) => {
+          clearTimeout(timeoutId);
+          resolve(data2);
+        });
+      })
+    ]);
   }
 };
 
@@ -336,19 +349,18 @@ var RoomManager = class extends eventemitter3_default {
   }
   async createRoom(scriptId, maxPlayers, playerName) {
     const res = await this.network.send("room:create", { scriptId, maxPlayers, playerName });
-    const room = res.room || {
-      id: res.roomId,
-      hostId: res.player?.id || "LOCAL_USER",
-      players: res.room?.players || [res.player].filter(Boolean),
-      maxPlayers,
-      scriptId
-    };
-    this.currentRoom = room;
+    console.log("[RoomManager] createRoom response:", JSON.stringify(res, null, 2));
+    this.currentRoom = res.room || null;
     this.currentPlayer = res.player || null;
+    if (!this.currentRoom || !this.currentPlayer) {
+      throw new Error("Failed to create room: missing room or player data");
+    }
     this.emit("roomCreated", { room: this.currentRoom, player: this.currentPlayer });
+    const roomId = res.roomId || this.currentRoom.id;
+    console.log("[RoomManager] Extracted roomId:", roomId);
     return {
-      roomId: res.roomId,
-      room,
+      roomId,
+      room: this.currentRoom,
       player: this.currentPlayer
     };
   }
@@ -356,6 +368,9 @@ var RoomManager = class extends eventemitter3_default {
     const res = await this.network.send("room:join", { roomId, playerName });
     this.currentRoom = res.room || null;
     this.currentPlayer = res.player || null;
+    if (!this.currentRoom || !this.currentPlayer) {
+      throw new Error("Failed to join room: missing room or player data");
+    }
     console.log(`Joined room ${roomId} as ${playerName}`, res);
     this.emit("roomJoined", { room: this.currentRoom, player: this.currentPlayer });
     return {

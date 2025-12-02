@@ -7,8 +7,8 @@ function delay(ms) {
 async function runDemo() {
   console.log('Initializing jubensha-sdk demo...');
 
-  const host = new JubenshaClient({ serverUrl: 'ws://localhost:8080' });
-  const guest = new JubenshaClient({ serverUrl: 'ws://localhost:8080' });
+  const host = new JubenshaClient({ serverUrl: 'ws://localhost:4000/ws' });
+  const guest = new JubenshaClient({ serverUrl: 'ws://localhost:4000/ws' });
 
   host.game.on('phaseChange', (phase) => {
     console.log(`>>> [HOST] Phase changed to ${phase}`);
@@ -22,11 +22,12 @@ async function runDemo() {
   await host.connect();
   await guest.connect();
 
-  const roomId = await host.room.createRoom('script_001', 5);
-  console.log('[HOST] Room created:', roomId);
+  const result = await host.room.createRoom('script_001', 5);
+  console.log('[HOST] Room created result:', JSON.stringify(result, null, 2));
+  console.log('[HOST] Room created:', result.roomId);
 
-  await guest.room.joinRoom(roomId, 'Player_B');
-  console.log('[GUEST] Joined room:', roomId);
+  await guest.room.joinRoom(result.roomId, 'Player_B');
+  console.log('[GUEST] Joined room:', result.roomId);
 
   console.log('Starting game...');
   await host.game.startGame();
@@ -47,10 +48,24 @@ async function runDemo() {
   console.log('Demo finished, disconnecting...');
   host.disconnect();
   guest.disconnect();
+  
+  // 确保进程正常退出
+  process.exit(0);
 }
 
-runDemo().catch((err) => {
-  console.error('Demo error:', err);
-  process.exitCode = 1;
-});
+// 添加超时处理
+const timeout = setTimeout(() => {
+  console.error('Demo timeout after 30 seconds');
+  process.exit(1);
+}, 30000);
+
+runDemo()
+  .then(() => {
+    clearTimeout(timeout);
+  })
+  .catch((err) => {
+    clearTimeout(timeout);
+    console.error('Demo error:', err);
+    process.exit(1);
+  });
 
