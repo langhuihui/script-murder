@@ -137,9 +137,9 @@
         let cssUrl = theme.cssPath;
         if (cssUrl.startsWith('./')) {
           // 如果是相对路径，通过 HTTP 服务器加载
-          // 开发环境使用 localhost:8081，生产环境需要配置正确的服务器地址
+          // 使用当前页面的域名和端口
           const baseUrl = window.location.protocol === 'file:' 
-            ? `http://localhost:${HTTP_PORT}` 
+            ? `${window.location.protocol === 'https:' ? 'https' : 'http'}://localhost:${HTTP_PORT}` 
             : window.location.origin;
           cssUrl = `${baseUrl}/scripts/${cssUrl.replace('./', '')}`;
         }
@@ -254,7 +254,15 @@
     }
 
     function connect() {
-      ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
+      // 根据当前页面的协议决定使用 ws:// 还是 wss://
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      // 使用当前页面的主机名和端口（window.location.host 包含主机名和端口）
+      // 如果部署在反向代理后面，使用 window.location.host 可以自动适配
+      const host = window.location.host;
+      const wsUrl = `${protocol}//${host}/ws`;
+      
+      console.log(`[Client] Connecting to WebSocket: ${wsUrl}`);
+      ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         console.log('Connected to server');
