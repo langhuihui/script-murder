@@ -48,29 +48,25 @@ async function waitForServer(maxWait = 15000): Promise<void> {
   throw new Error('Server startup timeout');
 }
 
-// 打开浏览器
-function openBrowser(url: string, role: 'host' | 'player') {
-  const fullUrl = `${url}?role=${role}`;
+// 打开浏览器（使用系统默认浏览器）
+function openBrowser(url: string) {
   const platform = process.platform;
   
   let command: string;
   if (platform === 'darwin') {
-    // macOS
-    command = `open -a "Google Chrome" "${fullUrl}" || open -a "Safari" "${fullUrl}" || open "${fullUrl}"`;
+    command = `open "${url}"`;
   } else if (platform === 'win32') {
-    // Windows
-    command = `start chrome "${fullUrl}" || start msedge "${fullUrl}" || start "${fullUrl}"`;
+    command = `start "" "${url}"`;
   } else {
-    // Linux
-    command = `xdg-open "${fullUrl}" || google-chrome "${fullUrl}" || chromium-browser "${fullUrl}"`;
+    command = `xdg-open "${url}"`;
   }
   
   exec(command, (error) => {
     if (error) {
-      console.warn(`Failed to open browser for ${role}:`, error.message);
-      console.log(`Please manually open: ${fullUrl}`);
+      console.warn(`Failed to open browser:`, error.message);
+      console.log(`Please manually open: ${url}`);
     } else {
-      console.log(`✓ Opened ${role} window: ${fullUrl}`);
+      console.log(`✓ Opened browser: ${url}`);
     }
   });
 }
@@ -108,25 +104,17 @@ async function main() {
     process.exit(1);
   }
   
-  // 2. 获取 HTML 文件路径
-  const htmlPath = path.join(projectRoot, 'test-script-list.html');
-  // 通过 URL 参数传递端口信息
-  const htmlUrl = `file://${htmlPath}?wsPort=${PORT}&httpPort=${PORT}`;
+  // 2. 使用 HTTP 协议访问
+  const url = `http://localhost:${PORT}`;
   
-  // 3. 打开两个浏览器窗口
-  console.log('2. Opening browser windows...');
-  console.log(`   Using port: ${PORT} (WebSocket and HTTP share the same port)`);
+  // 3. 打开浏览器窗口
+  console.log('2. Opening browser...');
+  console.log(`   URL: ${url}`);
   
-  // 延迟打开，确保第一个窗口完全加载
   await delay(1000);
-  openBrowser(htmlUrl, 'host');
-  
-  await delay(2000);
-  openBrowser(htmlUrl, 'player');
+  openBrowser(url);
   
   console.log('\n✓ Development environment ready!');
-  console.log('  - Host window: Will automatically create a room');
-  console.log('  - Player window: Will automatically join the room');
   console.log('\nPress Ctrl+C to stop the server\n');
   
   // 处理退出

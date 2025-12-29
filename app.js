@@ -28,26 +28,52 @@
       hard: '困难'
     };
 
-    // 阶段名称映射（统一管理）
-    const PHASE_NAME_MAP = {
-      'READING': 'character_introduction',
-      'SEARCH': 'palace_life',
-      'DISCUSSION': 'crisis_emerges',
-      'VOTE': 'queen_decision',
-      'REVEAL': 'final_judgment'
-    };
-
-    // 阶段索引映射（用于提取 storyline）
-    const PHASE_INDEX_MAP = {
-      'READING': [0, 1, 2],
-      'SEARCH': [3, 4, 5],
-      'DISCUSSION': [6, 7, 8],
-      'VOTE': [9, 10, 11],
-      'REVEAL': [12]
-    };
-
-    // 阶段列表
-    const PHASES = ['IDLE', 'READING', 'SEARCH', 'DISCUSSION', 'VOTE', 'REVEAL'];
+    // 默认阶段列表（当剧本没有定义阶段时使用）
+    const DEFAULT_PHASES = ['IDLE', 'READING', 'SEARCH', 'DISCUSSION', 'VOTE', 'REVEAL'];
+    
+    // 当前剧本的阶段列表（动态从剧本加载）
+    let PHASES = [...DEFAULT_PHASES];
+    
+    /**
+     * 从剧本加载阶段列表
+     */
+    function loadPhasesFromScript(script) {
+      if (script && script.phases && script.phases.length > 0) {
+        // 使用剧本定义的阶段，添加 IDLE 作为初始状态
+        PHASES = ['IDLE', ...script.phases.map(p => p.id)];
+        console.log('[Client] Loaded phases from script:', PHASES);
+      } else {
+        // 使用默认阶段
+        PHASES = [...DEFAULT_PHASES];
+        console.log('[Client] Using default phases:', PHASES);
+      }
+    }
+    
+    /**
+     * 根据阶段索引计算 storyline 范围
+     * 将 storyline 平均分配到各个阶段
+     */
+    function getStorylineIndicesForPhase(script, phaseIndex) {
+      if (!script || !script.storyline || !script.phases) {
+        return [];
+      }
+      
+      const totalStorylines = script.storyline.length;
+      const totalPhases = script.phases.length;
+      
+      if (totalPhases === 0) return [];
+      
+      // 平均分配 storyline 到各个阶段
+      const storiesPerPhase = Math.ceil(totalStorylines / totalPhases);
+      const startIndex = phaseIndex * storiesPerPhase;
+      const endIndex = Math.min(startIndex + storiesPerPhase, totalStorylines);
+      
+      const indices = [];
+      for (let i = startIndex; i < endIndex; i++) {
+        indices.push(i);
+      }
+      return indices;
+    }
 
     /**
      * 确保脚本完整加载（包含 phases 或 characters）
@@ -68,21 +94,13 @@
     }
 
     /**
-     * 查找阶段数据（通过阶段ID或名称映射）
+     * 查找阶段数据（通过阶段ID直接匹配）
      */
     function findPhaseData(script, phase) {
       if (!script || !script.phases) return null;
       
-      // 先尝试直接匹配阶段ID
-      let phaseData = script.phases.find(p => p.id === phase);
-      
-      // 如果找不到，尝试通过名称映射
-      if (!phaseData && PHASE_NAME_MAP[phase]) {
-        const phaseId = PHASE_NAME_MAP[phase];
-        phaseData = script.phases.find(p => p.id === phaseId);
-      }
-      
-      return phaseData;
+      // 直接通过阶段ID匹配
+      return script.phases.find(p => p.id === phase);
     }
 
     /**
@@ -357,6 +375,17 @@
               
               // 更新标题
               updatePageTitle(message.data.room);
+              
+              // 预加载剧本阶段列表
+              const scriptId = message.data.room.scriptId || currentScriptId;
+              if (scriptId) {
+                ensureScriptLoaded(scriptId, 'phases').then(script => {
+                  loadPhasesFromScript(script);
+                  console.log('[Client] Pre-loaded script phases for created room');
+                }).catch(err => {
+                  console.warn('[Client] Failed to pre-load script phases:', err);
+                });
+              }
             } else {
               console.error('Room data is missing in response:', message.data);
               showError('房间数据不完整');
@@ -443,6 +472,16 @@
           // 更新标题
           updatePageTitle(message.data.room);
           
+          // 预加载剧本阶段列表
+          if (currentScriptId) {
+            ensureScriptLoaded(currentScriptId, 'phases').then(script => {
+              loadPhasesFromScript(script);
+              console.log('[Client] Pre-loaded script phases for room');
+            }).catch(err => {
+              console.warn('[Client] Failed to pre-load script phases:', err);
+            });
+          }
+          
           // 更新状态显示
             const statusDiv = document.getElementById('autoJoinStatus');
             if (statusDiv) {
@@ -473,9 +512,25 @@
           
           console.log('[Client] Body classes AFTER setting:', document.body.className);
           
-          // 更新游戏阶段为初始阶段（READING）
-          currentGamePhase = 'READING';
-          updateGamePhase('READING');
+          // 加载剧本阶段列表
+          const scriptId = message.data.room.scriptId || currentScriptId;
+          ensureScriptLoaded(scriptId, 'phases').then(script => {
+            // 从剧本加载阶段列表
+            loadPhasesFromScript(script);
+            
+            // 使用剧本定义的第一个阶段作为初始阶段（跳过 IDLE）
+            const initialPhase = PHASES.length > 1 ? PHASES[1] : 'READING';
+            console.log('[Client] Initial phase from script:', initialPhase);
+            
+            // 更新游戏阶段为初始阶段
+            currentGamePhase = initialPhase;
+            updateGamePhase(initialPhase);
+          }).catch(err => {
+            console.error('[Client] Failed to load script phases:', err);
+            // 回退到默认阶段
+            currentGamePhase = 'READING';
+            updateGamePhase('READING');
+          });
           
           // 更新房间信息（包含角色分配）- 注意：updateRoomInfo 现在会检查状态，不会覆盖类名
           console.log('[Client] Calling updateRoomInfo with status:', message.data.room.status);
@@ -507,12 +562,12 @@
             displayPlayersWithCharacters(message.data.room).catch(err => {
               console.error('[Client] Failed to display players with characters:', err);
             });
-            // 显示当前阶段内容（房主）
-            displayHostCurrentPhaseContent('READING').catch(err => {
+            // 显示当前阶段内容（房主）- 使用动态阶段
+            displayHostCurrentPhaseContent(currentGamePhase).catch(err => {
               console.error('[Client] Failed to display host phase content:', err);
             });
             // 显示主持人剧本内容（根据当前阶段）
-            displayHostScriptContent(message.data.room, 'READING').catch(err => {
+            displayHostScriptContent(message.data.room, currentGamePhase).catch(err => {
               console.error('[Client] Failed to display host script content:', err);
             });
           } else {
@@ -528,7 +583,7 @@
               toggleBtn.style.display = 'block';
             }
             
-            displayCurrentPhaseContent('READING').catch(err => {
+            displayCurrentPhaseContent(currentGamePhase).catch(err => {
               console.error('[Client] Failed to display phase content:', err);
             });
             
@@ -1560,12 +1615,14 @@
         const phaseName = phaseData.name || phase;
         const phaseDescription = phaseData.description || '';
         
-        // 根据阶段从storyline中提取相关内容
+        // 根据阶段索引动态计算 storyline 范围
         let relevantStoryline = [];
-        if (script.storyline && Array.isArray(script.storyline)) {
-          // 根据阶段索引显示相关的故事线
-          const indices = PHASE_INDEX_MAP[phase] || [];
-          relevantStoryline = indices.map(i => script.storyline[i]).filter(Boolean);
+        if (script.storyline && Array.isArray(script.storyline) && script.phases) {
+          const phaseIndex = script.phases.findIndex(p => p.id === phase);
+          if (phaseIndex >= 0) {
+            const indices = getStorylineIndicesForPhase(script, phaseIndex);
+            relevantStoryline = indices.map(i => script.storyline[i]).filter(Boolean);
+          }
         }
         
         hostStoryline.innerHTML = `
@@ -1755,7 +1812,7 @@
       }
     }
 
-    function updateGamePhase(phase) {
+    async function updateGamePhase(phase) {
       currentGamePhase = phase;
       const gamePhaseSpan = document.getElementById('gamePhase');
       if (gamePhaseSpan) {
@@ -1764,7 +1821,24 @@
 
       const phaseInfo = document.getElementById('currentPhaseInfo');
       if (phaseInfo) {
-        const phaseNames = {
+        // 尝试从剧本中获取阶段名称
+        let phaseName = phase;
+        if (currentScriptId) {
+          try {
+            const script = scripts.find(s => s.id === currentScriptId);
+            if (script && script.phases) {
+              const phaseData = script.phases.find(p => p.id === phase);
+              if (phaseData) {
+                phaseName = phaseData.name;
+              }
+            }
+          } catch (e) {
+            console.warn('[Client] Failed to get phase name from script:', e);
+          }
+        }
+        
+        // 回退到默认名称映射
+        const defaultPhaseNames = {
           'IDLE': '等待开始',
           'READING': '阅读剧本',
           'SEARCH': '搜证环节',
@@ -1772,17 +1846,20 @@
           'VOTE': '投票环节',
           'REVEAL': '复盘/结案'
         };
-        phaseInfo.innerHTML = `<p><strong>当前阶段：</strong>${phaseNames[phase] || phase}</p>`;
+        const displayName = phaseName !== phase ? phaseName : (defaultPhaseNames[phase] || phase);
+        phaseInfo.innerHTML = `<p><strong>当前阶段：</strong>${displayName}</p>`;
         phaseInfo.style.display = 'block';
       }
 
       // 显示当前阶段的剧本内容
       displayCurrentPhaseContent(phase);
 
-      // 如果是搜证阶段，显示线索区域
+      // 如果是搜证阶段（investigation），显示线索区域
       const cluesSection = document.getElementById('cluesSection');
       if (cluesSection) {
-        cluesSection.style.display = phase === 'SEARCH' ? 'block' : 'none';
+        // 支持默认阶段 'SEARCH' 或剧本定义的 'investigation' 阶段
+        const isSearchPhase = phase === 'SEARCH' || phase === 'investigation';
+        cluesSection.style.display = isSearchPhase ? 'block' : 'none';
       }
       
       // 更新游戏控制显示（根据阶段更新按钮）

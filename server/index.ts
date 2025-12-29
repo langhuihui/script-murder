@@ -36,8 +36,11 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
+  // 解析 URL 路径（忽略查询参数）
+  const urlPath = req.url.split('?')[0];
+
   // 处理首页请求
-  if (req.url === '/' || req.url === '/index.html') {
+  if (urlPath === '/' || urlPath === '/index.html') {
     if (existsSync(INDEX_FILE)) {
       try {
         const content = readFileSync(INDEX_FILE);
@@ -89,10 +92,28 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
+  // 处理测试模式页面
+  if (urlPath === '/test' || urlPath === '/test-mode' || urlPath === '/test-mode.html') {
+    const testModePath = join(ROOT_DIR, 'test-mode.html');
+    if (existsSync(testModePath)) {
+      try {
+        const content = readFileSync(testModePath);
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(content);
+        return;
+      } catch (error) {
+        console.error('Error serving test mode file:', error);
+        res.writeHead(500);
+        res.end('Internal Server Error');
+        return;
+      }
+    }
+  }
+
   // 处理根目录静态文件（CSS、JS 等）
   const rootStaticFiles = ['/styles.css', '/app.js'];
-  if (rootStaticFiles.includes(req.url)) {
-    const filePath = join(ROOT_DIR, req.url);
+  if (rootStaticFiles.includes(urlPath)) {
+    const filePath = join(ROOT_DIR, urlPath);
     
     // 安全检查：确保文件在项目根目录内
     if (!filePath.startsWith(ROOT_DIR)) {

@@ -1,0 +1,303 @@
+/* 亚干的罪 - 主题样式 */
+
+/* 主题变量 */
+:root {
+  --achan-primary: #8B0000;
+  --achan-secondary: #CD853F;
+  --achan-background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  --achan-text: #E8DCC4;
+  --achan-accent: #DAA520;
+  --achan-shadow: rgba(139, 0, 0, 0.3);
+  --achan-border: #CD853F;
+}
+
+/* 整体背景 */
+.theme-achan-story {
+  background: var(--achan-background);
+  color: var(--achan-text);
+  font-family: Georgia, "Times New Roman", serif;
+  min-height: 100vh;
+}
+
+/* 标题样式 */
+.theme-achan-story h1,
+.theme-achan-story h2,
+.theme-achan-story h3 {
+  color: var(--achan-accent);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid var(--achan-primary);
+  padding-bottom: 0.5rem;
+}
+
+.theme-achan-story h1 {
+  font-size: 2.5rem;
+  letter-spacing: 0.1em;
+}
+
+/* 卡片样式 */
+.theme-achan-story .card {
+  background: linear-gradient(145deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
+  border: 2px solid var(--achan-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px var(--achan-shadow);
+  padding: 1.5rem;
+  margin: 1rem 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.theme-achan-story .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px var(--achan-shadow);
+}
+
+/* 角色卡片 */
+.theme-achan-story .character-card {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.2), rgba(205, 133, 63, 0.1));
+  border: 2px solid var(--achan-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-achan-story .character-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--achan-primary), var(--achan-accent), var(--achan-primary));
+}
+
+.theme-achan-story .character-name {
+  color: var(--achan-accent);
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.theme-achan-story .character-title {
+  color: var(--achan-secondary);
+  font-style: italic;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.theme-achan-story .character-avatar {
+  border: 3px solid var(--achan-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 20px var(--achan-shadow);
+}
+
+/* 线索样式 */
+.theme-achan-story .clue-card {
+  background: linear-gradient(145deg, rgba(15, 52, 96, 0.8), rgba(22, 33, 62, 0.9));
+  border: 1px solid var(--achan-secondary);
+  border-left: 4px solid var(--achan-accent);
+}
+
+.theme-achan-story .clue-card.discovered {
+  border-left-color: var(--achan-primary);
+  background: linear-gradient(145deg, rgba(139, 0, 0, 0.15), rgba(22, 33, 62, 0.9));
+}
+
+.theme-achan-story .clue-icon {
+  font-size: 2rem;
+  margin-right: 1rem;
+}
+
+.theme-achan-story .clue-name {
+  color: var(--achan-accent);
+  font-weight: bold;
+}
+
+/* 阶段指示器 */
+.theme-achan-story .phase-indicator {
+  background: linear-gradient(90deg, var(--achan-primary), transparent);
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.theme-achan-story .phase-name {
+  color: var(--achan-accent);
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.theme-achan-story .phase-timer {
+  color: var(--achan-text);
+  font-size: 1rem;
+}
+
+/* 按钮样式 */
+.theme-achan-story .btn {
+  background: linear-gradient(145deg, var(--achan-primary), #5c0000);
+  color: var(--achan-text);
+  border: 1px solid var(--achan-accent);
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.theme-achan-story .btn:hover {
+  background: linear-gradient(145deg, #a50000, var(--achan-primary));
+  box-shadow: 0 4px 15px var(--achan-shadow);
+  transform: translateY(-2px);
+}
+
+.theme-achan-story .btn-secondary {
+  background: linear-gradient(145deg, var(--achan-secondary), #8B6914);
+  border-color: var(--achan-accent);
+}
+
+.theme-achan-story .btn-secondary:hover {
+  background: linear-gradient(145deg, #DEB887, var(--achan-secondary));
+}
+
+/* 掣签动画 */
+.theme-achan-story .lot-casting {
+  animation: lotGlow 2s ease-in-out infinite;
+}
+
+@keyframes lotGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px var(--achan-accent);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--achan-accent), 0 0 50px var(--achan-primary);
+  }
+}
+
+/* 投票区域 */
+.theme-achan-story .vote-area {
+  background: rgba(139, 0, 0, 0.1);
+  border: 2px solid var(--achan-primary);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.theme-achan-story .vote-option {
+  background: rgba(22, 33, 62, 0.8);
+  border: 1px solid var(--achan-secondary);
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-achan-story .vote-option:hover {
+  background: rgba(139, 0, 0, 0.3);
+  border-color: var(--achan-accent);
+}
+
+.theme-achan-story .vote-option.selected {
+  background: rgba(139, 0, 0, 0.5);
+  border-color: var(--achan-accent);
+  box-shadow: 0 0 15px var(--achan-shadow);
+}
+
+/* 故事线展示 */
+.theme-achan-story .storyline {
+  border-left: 3px solid var(--achan-accent);
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.theme-achan-story .storyline-item {
+  position: relative;
+  padding: 0.75rem 0;
+  color: var(--achan-text);
+}
+
+.theme-achan-story .storyline-item::before {
+  content: '⚔';
+  position: absolute;
+  left: -2rem;
+  color: var(--achan-accent);
+}
+
+/* 审判场景 */
+.theme-achan-story .judgment-scene {
+  background: radial-gradient(ellipse at center, rgba(139, 0, 0, 0.3), transparent);
+  border: 2px solid var(--achan-primary);
+  padding: 2rem;
+  text-align: center;
+}
+
+.theme-achan-story .judgment-title {
+  color: var(--achan-primary);
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  animation: judgmentPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes judgmentPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* 秘密信息 */
+.theme-achan-story .secret-info {
+  background: rgba(139, 0, 0, 0.2);
+  border: 1px dashed var(--achan-primary);
+  padding: 1rem;
+  border-radius: 4px;
+  font-style: italic;
+}
+
+/* 对话框 */
+.theme-achan-story .dialog {
+  background: linear-gradient(145deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
+  border: 2px solid var(--achan-accent);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.theme-achan-story .dialog-header {
+  background: linear-gradient(90deg, var(--achan-primary), transparent);
+  padding: 1rem;
+  border-bottom: 1px solid var(--achan-border);
+}
+
+/* 滚动条样式 */
+.theme-achan-story ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.theme-achan-story ::-webkit-scrollbar-track {
+  background: rgba(26, 26, 46, 0.5);
+}
+
+.theme-achan-story ::-webkit-scrollbar-thumb {
+  background: var(--achan-primary);
+  border-radius: 4px;
+}
+
+.theme-achan-story ::-webkit-scrollbar-thumb:hover {
+  background: var(--achan-accent);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .theme-achan-story h1 {
+    font-size: 1.75rem;
+  }
+  
+  .theme-achan-story .card {
+    padding: 1rem;
+  }
+  
+  .theme-achan-story .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}

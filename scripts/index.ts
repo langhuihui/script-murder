@@ -1,8 +1,10 @@
 import { estherScript } from './esther-story';
+import { achanScript } from './achan-story';
 import type { GameScript } from '../src/types/script';
 
 export const scripts: GameScript[] = [
-  estherScript
+  estherScript,
+  achanScript
 ];
 
 export const scriptMap: Map<string, GameScript> = new Map(
