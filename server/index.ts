@@ -1,13 +1,11 @@
 import { JubenshaServer } from '../src/server';
 import { createServer } from 'http';
 import { readFileSync, existsSync } from 'fs';
-import { join, extname, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { getPortConfig } from '../src/utils/port-config';
+import { join, extname } from 'path';
+import { getScript, getScriptSummaries } from '../scripts/index';
 
-// 获取当前文件目录
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// 获取当前文件目录 (兼容 ESM 和 CJS)
+const __dirname = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
 // 从环境变量读取端口配置（现在共用同一个端口）
 const PORT = parseInt(process.env.PORT || process.env.WS_PORT || process.env.HTTP_PORT || '4000', 10);
@@ -152,7 +150,8 @@ const httpServer = createServer((req, res) => {
 // 启动 WebSocket 服务器（挂载到 HTTP 服务器上）
 const wsServer = new JubenshaServer({
   server: httpServer,
-  path: '/ws'
+  path: '/ws',
+  scripts: { getScript, getScriptSummaries }
 });
 
 // 启动 HTTP 服务器（WebSocket 也挂载在这个服务器上）

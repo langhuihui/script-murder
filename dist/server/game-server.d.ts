@@ -1,13 +1,19 @@
 import { Server } from 'http';
+export interface ScriptModule {
+    getScript: (id: string) => any;
+    getScriptSummaries: () => any[];
+}
 export interface GameServerOptions {
     server?: Server;
     port?: number;
     path?: string;
+    scripts?: ScriptModule;
 }
 export declare class JubenshaServer {
     private wss;
     private rooms;
     private players;
+    private scriptsModule;
     constructor(options: GameServerOptions);
     private setup;
     private handleMessage;

@@ -3657,11 +3657,15 @@ var JubenshaServer = class {
   constructor(options) {
     this.rooms = /* @__PURE__ */ new Map();
     this.players = /* @__PURE__ */ new Map();
+    this.scriptsModule = null;
     this.wss = new import_websocket_server.default({
       server: options.server,
       port: options.port,
       path: options.path || "/ws"
     });
+    if (options.scripts) {
+      this.scriptsModule = options.scripts;
+    }
     this.setup();
   }
   setup() {
@@ -3728,6 +3732,9 @@ var JubenshaServer = class {
    * 加载脚本模块
    */
   loadScriptModule() {
+    if (this.scriptsModule) {
+      return this.scriptsModule;
+    }
     const path = require("path");
     const scriptPath = path.join(__dirname, "../../scripts/index");
     return require(scriptPath);

@@ -18,13 +18,15 @@
     }
   },
   "scripts": {
-    "build": "npm run build:cjs && npm run build:esm && npm run build:server && tsc --emitDeclarationOnly",
+    "build": "npm run build:cjs && npm run build:esm && npm run build:server && npm run build:entry && tsc --emitDeclarationOnly",
     "build:cjs": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.cjs",
     "build:esm": "esbuild src/index.ts --bundle --platform=browser --format=esm --outfile=dist/index.mjs",
     "build:server": "esbuild src/server/index.ts --bundle --platform=node --format=cjs --outfile=dist/server/index.cjs && esbuild src/server/index.ts --bundle --platform=node --format=esm --outfile=dist/server/index.mjs --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\"",
+    "build:entry": "esbuild server/index.ts --bundle --platform=node --format=cjs --outfile=dist/entry.cjs --external:ws",
     "dev": "tsx start-dev.ts",
     "dev:watch": "tsc -w",
     "server": "npm run build && tsx server/index.ts",
+    "start": "node dist/entry.cjs",
     "demo": "node demo.js",
     "test:room": "tsx test-room-flow.ts",
     "test:e2e": "playwright test",

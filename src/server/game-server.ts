@@ -1,10 +1,16 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 
+export interface ScriptModule {
+  getScript: (id: string) => any;
+  getScriptSummaries: () => any[];
+}
+
 export interface GameServerOptions {
   server?: Server;
   port?: number;
   path?: string;
+  scripts?: ScriptModule;
 }
 
 interface Player {
@@ -40,6 +46,7 @@ export class JubenshaServer {
   private wss: WebSocketServer;
   private rooms: Map<string, Room> = new Map();
   private players: Map<string, Player> = new Map();
+  private scriptsModule: ScriptModule | null = null;
 
   constructor(options: GameServerOptions) {
     this.wss = new WebSocketServer({
@@ -47,6 +54,10 @@ export class JubenshaServer {
       port: options.port,
       path: options.path || '/ws'
     });
+
+    if (options.scripts) {
+      this.scriptsModule = options.scripts;
+    }
 
     this.setup();
   }
@@ -126,7 +137,11 @@ export class JubenshaServer {
   /**
    * 加载脚本模块
    */
-  private loadScriptModule() {
+  private loadScriptModule(): ScriptModule {
+    if (this.scriptsModule) {
+      return this.scriptsModule;
+    }
+    // Fallback for development: dynamic require
     const path = require('path');
     const scriptPath = path.join(__dirname, '../../scripts/index');
     return require(scriptPath);
