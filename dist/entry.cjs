@@ -1679,7 +1679,6 @@ function getScriptSummaries() {
 }
 
 // server/index.ts
-var __dirname2 = typeof __dirname2 !== "undefined" ? __dirname2 : process.cwd();
 var PORT = parseInt(process.env.PORT || process.env.WS_PORT || process.env.HTTP_PORT || "4000", 10);
 var CONTENT_TYPES = {
   ".css": "text/css",
@@ -1691,8 +1690,8 @@ var CONTENT_TYPES = {
   ".svg": "image/svg+xml",
   ".html": "text/html"
 };
-var SCRIPTS_DIR = (0, import_path.join)(__dirname2, "..", "scripts");
-var ROOT_DIR = (0, import_path.join)(__dirname2, "..");
+var ROOT_DIR = process.cwd();
+var SCRIPTS_DIR = (0, import_path.join)(ROOT_DIR, "scripts");
 var INDEX_FILE = (0, import_path.join)(ROOT_DIR, "test-script-list.html");
 var httpServer = (0, import_http.createServer)((req, res) => {
   if (!req.url) {
@@ -1721,7 +1720,7 @@ var httpServer = (0, import_http.createServer)((req, res) => {
     }
   }
   if (req.url.startsWith("/scripts/")) {
-    const filePath = (0, import_path.join)(__dirname2, "..", req.url);
+    const filePath = (0, import_path.join)(ROOT_DIR, req.url);
     if (!filePath.startsWith(SCRIPTS_DIR)) {
       res.writeHead(403);
       res.end("Forbidden");

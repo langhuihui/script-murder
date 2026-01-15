@@ -4,9 +4,6 @@ import { readFileSync, existsSync } from 'fs';
 import { join, extname } from 'path';
 import { getScript, getScriptSummaries } from '../scripts/index';
 
-// 获取当前文件目录 (兼容 ESM 和 CJS)
-const __dirname = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-
 // 从环境变量读取端口配置（现在共用同一个端口）
 const PORT = parseInt(process.env.PORT || process.env.WS_PORT || process.env.HTTP_PORT || '4000', 10);
 
@@ -22,8 +19,9 @@ const CONTENT_TYPES: Record<string, string> = {
   '.html': 'text/html'
 };
 
-const SCRIPTS_DIR = join(__dirname, '..', 'scripts');
-const ROOT_DIR = join(__dirname, '..');
+// 使用 process.cwd() 获取项目根目录（Render 会在项目根目录运行）
+const ROOT_DIR = process.cwd();
+const SCRIPTS_DIR = join(ROOT_DIR, 'scripts');
 const INDEX_FILE = join(ROOT_DIR, 'test-script-list.html');
 
 // 创建 HTTP 服务器用于提供静态文件（CSS、图片等）
@@ -60,7 +58,7 @@ const httpServer = createServer((req, res) => {
 
   // 处理静态文件请求（scripts 目录下的文件）
   if (req.url.startsWith('/scripts/')) {
-    const filePath = join(__dirname, '..', req.url);
+    const filePath = join(ROOT_DIR, req.url);
     
     // 安全检查：确保文件在 scripts 目录内
     if (!filePath.startsWith(SCRIPTS_DIR)) {
